@@ -22,6 +22,10 @@ in
 
       # For WebAssembly unit-testing
       wasm3 # wasmer is currently broken on macOS ARM
+
+      nim
+
+      clang
     ];
 
     shellHook = ''
