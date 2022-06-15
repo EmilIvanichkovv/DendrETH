@@ -3,15 +3,15 @@
 ## Create `nim` file with some functions. For example [`add.nim`](src/nimToWasm/add.nim) is:
 
 ```nim
-proc print(value: cdouble) {.importc.}
+proc print(value: cdouble) {.importc, cdecl}
 
-proc plusAdd*(a,b: float64): float64 {.exportc.} =
+proc sum*(a,b: float64): float64 {.cdecl, exportc, dynlib.} =
   a + b
 
-proc printAdd*(a,b: float64) {.exportc.} =
-  print(plusAdd(a, b))
+proc printAdd*(a,b: float64) {.cdecl, exportc, dynlib} =
+  print(sum(a, b))
 
-proc start*()  {.exportc.} =
+proc start*() {.exportc: "_start".} =
   discard
 ```
 
