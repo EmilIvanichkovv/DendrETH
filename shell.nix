@@ -2,6 +2,7 @@
 with pkgs; let
   nodejs = nodejs-16_x;
   corepack = callPackage ./nix/corepack-shims {inherit nodejs;};
+  llvm = llvmPackages_14;
 in
   mkShell {
     buildInputs = [
@@ -25,10 +26,23 @@ in
 
       nim
 
-      clang
+      llvm.lld
+
+      llvm.clang-unwrapped
+      llvm.llvm
+      # Foor finalization of the output and it also provides a
+      # 15% size reduction of the generated .wasm files.
+      binaryen
+
+      ldc
     ];
 
     shellHook = ''
+      export CC=clang
       figlet "DendrETH"
+      echo "${llvm.clang-unwrapped}"
+      echo "${llvm.llvm}"
+      echo "${llvm.lld}"
+      echo "${binaryen}"
     '';
   }
