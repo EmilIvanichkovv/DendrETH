@@ -1,11 +1,10 @@
-proc print(x: float64) =
-  echo x
+proc print(value: cdouble) {.importc.}
 
-proc add(a,b: float64): float64 {.exportc.} =
+proc plusAdd*(a,b: float64): float64 {.exportc.} =
   a + b
 
-proc printAdd(a,b: float64) =
-  print(add(a, b))
+proc printAdd*(a,b: float64) {.exportc.} =
+  print(plusAdd(a, b))
 
-proc start() =
+proc start*()  {.exportc.} =
   discard

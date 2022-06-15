@@ -13,8 +13,8 @@
             }
         };
 
-        const { instance } = await WebAssembly.instantiateStreaming(wasmModule, importObject);
-        console.log(instance);
+        // const { instance } = await WebAssembly.instantiateStreaming(wasmModule, importObject);
+        // console.log(instance);
         const { instance: { exports } } = await WebAssembly.instantiateStreaming(wasmModule, importObject);
         console.log(exports);
         const r = exports.printAdd(42, 25);
