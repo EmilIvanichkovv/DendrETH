@@ -15,5 +15,6 @@
       inherit self nixpkgs;
       name = "DendrETH";
       shell = ./shell.nix;
+      preOverlays = [ (import ./nix/nim/overlay.nix) ];
     };
 }

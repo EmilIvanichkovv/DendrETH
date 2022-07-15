@@ -3,7 +3,7 @@ with pkgs; let
   nodejs = nodejs-18_x;
   llvm = llvmPackages_13;
   corepack = callPackage ./nix/corepack-shims {inherit nodejs;};
-  nim-wasm = callPackage ./nix/nim-wasm {inherit llvm;};
+  nim-wasm = callPackage ./nix/nim-wasm {inherit llvm nim;};
 in
   mkShell {
     buildInputs = [
