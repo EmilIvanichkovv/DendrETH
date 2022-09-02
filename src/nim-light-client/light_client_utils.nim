@@ -1,10 +1,14 @@
 import
-  std/[typetraits, options, tables],
+  std/[typetraits, options, tables, sequtils],
   ssz_serialization/[merkleization, types, proofs],
   nimcrypto/hash,
   blscurve
 
 export options, merkleization, types, proofs
+
+
+proc print(value: auto) {.importc, cdecl}
+
 
 type
   Eth2Digest* = MDigest[32 * 8] ## `hash32` from spec
@@ -153,6 +157,10 @@ type
     genesis_validators_root*: Eth2Digest
 
 # Types from crypto.nim
+  BlsResult*[T] = Result[T, cstring]
+
+  BlsCurveType* =  ValidatorPubKey | ValidatorSig
+
   ValidatorPubKey* = object ##\
     ## Compressed raw serialized key bytes - this type is used in so as to not
     ## eagerly load keys - deserialization is slow, as are equality checks -
@@ -392,6 +400,49 @@ proc loadWithCache*(v: ValidatorPubKey): Option[CookedPubKey] =
       cache[v.blob] = cooked.get()
     return cooked
 
+func blsFastAggregateVerify*(
+       publicKeys: openArray[CookedPubKey],
+       message: openArray[byte],
+       signature: CookedSig
+     ): bool =
+  ## Verify the aggregate of multiple signatures on the same message
+  ## This function is faster than AggregateVerify
+  ##
+  ## The proof-of-possession MUST be verified before calling this function.
+  ## It is recommended to use the overload that accepts a proof-of-possession
+  ## to enforce correct usage.
+  # TODO: Note: `invalid` in the following paragraph means invalid by construction
+  #             The keys/signatures are not even points on the elliptic curves.
+  #       To respect both the IETF API and the fact that
+  #       we can have invalid public keys (as in not point on the elliptic curve),
+  #       requiring a wrapper indirection,
+  #       we need a first pass to extract keys from the wrapper
+  #       and then call fastAggregateVerify.
+  #       Instead:
+  #         - either we expose a new API: context + init-update-finish
+  #           in blscurve which already exists internally
+  #         - or at network/databases/serialization boundaries we do not
+  #           allow invalid BLS objects to pollute consensus routines
+  let keys = mapIt(publicKeys, PublicKey(it))
+  fastAggregateVerify(keys, message, blscurve.Signature(signature))
+
+template toRaw*(x: ValidatorPubKey | ValidatorSig): auto =
+  x.blob
+
+func fromRaw*(BT: type[ValidatorPubKey | ValidatorSig], bytes: openArray[byte]): BlsResult[BT] =
+  # Signatures and keys are deserialized lazily
+  if bytes.len() != sizeof(BT):
+    err "bls: invalid bls length"
+  else:
+    ok BT(blob: toArray(sizeof(BT), bytes))
+
+func fromHex*(T: type BlsCurveType, hexStr: string): BlsResult[T] {.inline.} =
+  ## Initialize a BLSValue from its hex representation
+  try:
+    T.fromRaw(hexStr.hexToSeqByte())
+  except ValueError:
+    err "bls: cannot parse value"
+
 proc blsFastAggregateVerify*(
        publicKeys: openArray[ValidatorPubKey],
        message: openArray[byte],
@@ -406,15 +457,22 @@ proc blsFastAggregateVerify*(
 
   fastAggregateVerify(unwrapped, message, blscurve.Signature(signature))
 
+func blsFastAggregateVerify*(
+       publicKeys: openArray[CookedPubKey],
+       message: openArray[byte],
+       signature: ValidatorSig
+     ): bool =
+  let parsedSig = signature.load()
+  parsedSig.isSome and blsFastAggregateVerify(publicKeys, message, parsedSig.get())
+
 proc blsFastAggregateVerify*(
        publicKeys: openArray[ValidatorPubKey],
        message: openArray[byte],
        signature: ValidatorSig
      ): bool =
   let parsedSig = signature.load()
-  parsedSig.isSome and blsFastAggregateVerify(publicKeys,
-                                              message,
-                                              parsedSig.get())
+  parsedSig.isSome and blsFastAggregateVerify(publicKeys, message, parsedSig.get())
+
 
 # Callables from base.nim
 template data*(v: ForkDigest | Version | DomainType): array[4, byte] =
@@ -609,6 +667,8 @@ type
 
     Duplicate = "Duplicate"
       ## We've seen this block already, can't add again
+      ##
+    Debug = "Debug"
 
 when defined(lightClientWASM):
   proc wasmQuit(errMsg: cstring, errLength: int):int {. importc, cdecl, exportc, dynlib} =

@@ -1,7 +1,10 @@
 import light_client_utils
 
+proc print(value:auto ) {.importc, cdecl}
+
+
 # https://github.com/ethereum/consensus-specs/blob/dev/specs/altair/light-client/sync-protocol.md#initialize_light_client_store
-func initialize_light_client_store*(
+proc initialize_light_client_store*(
     trusted_block_root: Eth2Digest,
     bootstrap: LightClientBootstrap
   ): LightClientStore {.cdecl, exportc, dynlib} =
@@ -113,7 +116,7 @@ proc validate_light_client_update*(
         BlockError.Invalid
       )
 
-  # # Verify sync committee aggregate signature
+  # Verify sync committee aggregate signature
   let sync_committee =
     if signature_period == store_period:
       unsafeAddr store.current_sync_committee
