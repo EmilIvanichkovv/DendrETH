@@ -16,10 +16,10 @@ echo a
 
 let
   bootstrapNim = LCWJson.loadFile(
-    "/home/Emil/code/repos/metacraft-labs/DendrETH/vendor/eth2-light-client-updates/mainnet/snapshot.json",
+    "/home/Emil/code/repos/metacraft-labs/DendrETH/vendor/eth2-light-client-updates/prater/bootstrap.json",
     light_client_utils.LightClientBootstrap)
-  u290 = LCWJson.loadFile(
-    "/home/Emil/code/repos/metacraft-labs/DendrETH/vendor/eth2-light-client-updates/mainnet/updates/00290.json",
+  firstUpdate = LCWJson.loadFile(
+    "/home/Emil/code/repos/metacraft-labs/DendrETH/vendor/eth2-light-client-updates/prater/updates/00143.json",
     light_client_utils.LightClientUpdate)
 
 import data
@@ -42,11 +42,14 @@ proc validateLightClientUpdateTest(
    initialize_light_client_store(hash_tree_root(bootstrapNim.header), bootstrapNim)
 
   echo bootstrapNim == bootstrap
-  echo update == u290
+  # echo bootstrapNim
+  echo bootstrap
+
+  # echo update == firstUpdate
 
   validate_light_client_update(lightClientStore,
-                               u290,
-                               u290.signature_slot,
+                               firstUpdate,
+                               firstUpdate.signature_slot,
                                genesis_validators_root)
 let ressssss =  validateLightClientUpdateTest(a.unsafeAddr, a.unsafeAddr,a.unsafeAddr)
 echo ressssss

@@ -31,7 +31,7 @@
         --clang.linkerexe:emcc
         --clang.cpp.exe:emcc
         --clang.cpp.linkerexe:emcc
-        --passL:" -g -O0 -s ASSERTIONS=1 -s ALLOW_MEMORY_GROWTH -s WASM=1 -s ERROR_ON_UNDEFINED_SYMBOLS=0 -s EXPORTED_RUNTIME_METHODS=`['ccall']`"
+        --passL:" -g -O0 -s ASSERTIONS=1 -s ALLOW_MEMORY_GROWTH=1 -s WASM=1 -s ERROR_ON_UNDEFINED_SYMBOLS=0 -s TOTAL_MEMORY=2GB -s EXPORTED_RUNTIME_METHODS=`['ccall']`"
       @else:
         --clang.options.linker:""
         --clang.cpp.options.linker:""

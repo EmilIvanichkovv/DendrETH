@@ -37,7 +37,7 @@ proc validate_light_client_update*(
   let num_active_participants = countOnes(sync_committee_bits).uint64
   assertLC(
     num_active_participants >= MIN_SYNC_COMMITTEE_PARTICIPANTS,
-    BlockError.Invalid)
+    BlockError.Debug)
 
   # Verify update does not skip a sync committee period
   when update is SomeLightClientUpdateWithFinality:
